@@ -1,0 +1,36 @@
+import tweepy
+
+from tweepy import Stream
+from tweepy.streaming import StreamListener
+import json
+from credentials import ACCESS_TOKEN, ACCESS_TOKEN_SECRET, CONSUMER_KEY, CONSUMER_SECRET, PHRASE_TO_SEARCH # create a separate file to store secret data
+
+class StdOutListener(StreamListener):
+    def on_data(self, data):
+        clean_data = json.loads(data)
+        tweetId = clean_data["id"]
+        tweet = ' # this is the tweet that will reply to the caught phrase '
+        respondToTweet(tweet, tweetId)       
+
+def setUpAuth():
+    #authenticate to twitter
+    auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
+    auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
+    api = tweepy.API(auth)
+    return api, auth
+
+def followStream():
+    api, auth = setUpAuth()
+    listener = StdOutListener()
+    stream = Stream(auth, listener)
+    stream.filter(track=[PHRASE_TO_SEARCH])
+    
+def respondToTweet(tweet, tweetId):
+    api, auth = setUpAuth()
+    api.update_status(tweet, in_reply_to_status_id = tweetId, auto_populate_reply_metadata = True)
+
+if __name__ == "__main__":
+    followStream()
+
+
+
